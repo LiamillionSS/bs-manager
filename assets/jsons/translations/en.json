@@ -451,7 +451,8 @@
                     "PROTON_NOT_FOUND": "Proton binary not found",
                     "EXIT": "Abrupt stop",
                     "OCULUS_LIB_NOT_FOUND": "Oculus library not found",
-                    "ORIGINAL_OCULUS_NOT_INSTALLED": "Original Oculus version not found"
+                    "ORIGINAL_OCULUS_NOT_INSTALLED": "Original Oculus version not found",
+                    "BSMBAK_RENAME_FAILED": "Failed to rename BSM backup folder"
                 },
                 "msg": {
                     "UNKNOWN_ERROR": "An unknown error has occurred.",
@@ -463,7 +464,8 @@
                     "OCULUS_LIB_NOT_FOUND": "Check that the Oculus application is properly installed, and that the libraries are correctly defined in Oculus.",
                     "PROTON_NOT_SET": "Set the Proton path in settings.",
                     "PROTON_NOT_FOUND": "Set the Proton path in settings.",
-                    "ORIGINAL_OCULUS_NOT_INSTALLED": "Beat Saber must be installed from the Oculus app before opening."
+                    "ORIGINAL_OCULUS_NOT_INSTALLED": "Ensure Beat Saber is installed from the Oculus app before opening or check symlinks/junctions.",
+                    "BSMBAK_RENAME_FAILED": "Please see BSM discord for help while this issue is being worked on"
                 },
                 "actions": {
                     "STEAM_NOT_RUNNING": "Launch Steam"
