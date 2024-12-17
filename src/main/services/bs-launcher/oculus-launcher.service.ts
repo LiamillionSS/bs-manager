@@ -89,12 +89,27 @@ export class OculusLauncherService extends AbstractLauncherService implements St
         }));
     }
 
+    private async oculusRename(source:string, destination:string): Promise<void> {
+        try {
+            return rename(source, destination);
+        } catch (error) {
+            log.error("[Oculus Error] Failed to rename", `"${source}"`, "to", `"${destination}"`);
+            throw CustomError.fromError(new Error("Failed to rename oculus folder"), BSLaunchError.BSMBAK_RENAME_FAILED)
+        }
+    }
+
     private async backupOriginalBeatSaber(): Promise<void>{
         const bsFolder = await this.oculus.getGameFolder(OCULUS_BS_DIR);
         if(!bsFolder){ return; }
         const backupPath = await ensurePathNotAlreadyExist(path.join(bsFolder, "..", OCULUS_BS_BACKUP_DIR));
         log.info("Backing up original Beat Saber", bsFolder, backupPath);
-        return rename(bsFolder, backupPath);
+        await this.oculusRename(bsFolder, backupPath)
+//        try {
+//            return await rename(bsFolder, backupPath);
+//        } catch (error) {
+//            log.error("Failed to rename folder:", error);
+//            throw CustomError.fromError(new Error("Failed to rename oculus folder"), BSLaunchError.BSMBAK_RENAME_FAILED)
+//        }
     }
 
     public async restoreOriginalBeatSaber(): Promise<void>{
@@ -102,7 +117,12 @@ export class OculusLauncherService extends AbstractLauncherService implements St
         if(!(await pathExists(bsFolderBackupPath))){ return; }
         const originalPath = path.join(bsFolderBackupPath, "..", OCULUS_BS_DIR);
         log.info("Restoring original Beat Saber", bsFolderBackupPath, originalPath);
-        return rename(bsFolderBackupPath, originalPath);
+        await this.oculusRename(bsFolderBackupPath, originalPath)
+//        try {
+//            return await rename(bsFolderBackupPath, originalPath);
+//        } catch (error) {
+//            throw CustomError.fromError(new Error("Restore process failed to rename oculus folder"), BSLaunchError.BSMBAK_RENAME_FAILED)
+//        }
     }
 
     private launchSymlinkCleaner(pid: number, symlinkPath: string){
@@ -117,20 +137,38 @@ export class OculusLauncherService extends AbstractLauncherService implements St
     public launch(launchOptions: LaunchOption): Observable<BSLaunchEventData> {
 
         const prepareOriginalVersion: () => Promise<string> = async () => {
-            await this.restoreOriginalBeatSaber();
-            const bsPath = await this.oculus.getGameFolder(OCULUS_BS_DIR);
-            if(!bsPath){
-                throw new Error("Oculus Beat Saber path not found");
+            try {
+                await this.restoreOriginalBeatSaber();
+                const bsPath = await this.oculus.getGameFolder(OCULUS_BS_DIR);
+                if (!bsPath) {
+                    throw CustomError.fromError(new Error("Oculus Beat Saber path not found"), BSLaunchError.ORIGINAL_OCULUS_NOT_INSTALLED)
+                }
+                return bsPath;
+            } catch (error) {
+                if (error instanceof CustomError && error.code === BSLaunchError.BSMBAK_RENAME_FAILED) {
+                    throw error;
+                } else if (error instanceof CustomError && error.code === BSLaunchError.ORIGINAL_OCULUS_NOT_INSTALLED) {
+                    throw error;
+                } else {
+                    log.error("Could not get original version path", error);
+                    throw CustomError.fromError(new Error("An unexpected error occurred while getting the original version path"), BSLaunchError.UNKNOWN_ERROR);
+                }
             }
-            return bsPath;
         }
+
 
         const prepareDowngradedVersion: () => Promise<string> = async () => {
 
-            const originalVersionPath = await prepareOriginalVersion().catch(() => null);
-            if (!originalVersionPath) {
-                throw CustomError.fromError(new Error("Original Oculus Beat Saber not installed"), BSLaunchError.ORIGINAL_OCULUS_NOT_INSTALLED);
-            }
+//            const originalVersionPath = await prepareOriginalVersion()
+//
+//                .catch(error => {
+//                    log.error("Could not get original version path", error);
+//                    return null;
+//                });
+//
+//            if (!originalVersionPath) {
+//                throw CustomError.fromError(new Error("Original Oculus Beat Saber not installed"), BSLaunchError.ORIGINAL_OCULUS_NOT_INSTALLED);
+//            }
 
             const oculusLib = await lastValueFrom(this.oculusLib$.pipe(take(1), timeout(sToMs(30)), catchError(() => of(null))));
 
