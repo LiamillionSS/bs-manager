@@ -156,7 +156,6 @@ export class OculusLauncherService extends AbstractLauncherService implements St
             }
         }
 
-
         const prepareDowngradedVersion: () => Promise<string> = async () => {
 
 //            const originalVersionPath = await prepareOriginalVersion()
