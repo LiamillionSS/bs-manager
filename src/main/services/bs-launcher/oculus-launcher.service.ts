@@ -134,15 +134,19 @@ export class OculusLauncherService extends AbstractLauncherService implements St
         spawn(path.join(scriptPath, exeName), [`${pid}`, symlinkPath], { detached: true, stdio: "ignore" });
     }
 
+    private async checkBeatSaberPath(bsPath: string) {
+        if (!bsPath) {
+            throw CustomError.fromError(new Error("Oculus Beat Saber path not found"), BSLaunchError.ORIGINAL_OCULUS_NOT_INSTALLED);
+        }
+    }
+
     public launch(launchOptions: LaunchOption): Observable<BSLaunchEventData> {
 
         const prepareOriginalVersion: () => Promise<string> = async () => {
             try {
                 await this.restoreOriginalBeatSaber();
                 const bsPath = await this.oculus.getGameFolder(OCULUS_BS_DIR);
-                if (!bsPath) {
-                    throw CustomError.fromError(new Error("Oculus Beat Saber path not found"), BSLaunchError.ORIGINAL_OCULUS_NOT_INSTALLED)
-                }
+                await this.checkBeatSaberPath(bsPath);
                 return bsPath;
             } catch (error) {
                 if (error instanceof CustomError && error.code === BSLaunchError.BSMBAK_RENAME_FAILED) {
